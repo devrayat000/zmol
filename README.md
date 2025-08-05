@@ -1,36 +1,185 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Zmol - URL Shortener
 
-## Getting Started
+A modern, fast URL shortener built with Next.js 15, featuring server actions, real-time analytics, and a beautiful UI.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- 🔗 **URL Shortening**: Transform long URLs into short, memorable links
+- 📊 **Analytics**: Track clicks, view statistics, and monitor performance
+- 🎨 **Custom Codes**: Create personalized short codes
+- 📱 **Responsive Design**: Beautiful UI that works on all devices
+- ⚡ **Fast Performance**: Built with Next.js 15 and server actions
+- 🌙 **Dark Mode**: Automatic dark/light mode support
+- 🗄️ **PostgreSQL**: Reliable database with Drizzle ORM
+- 📈 **Real-time Stats**: Click tracking with detailed analytics
+
+## Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS with shadcn/ui components
+- **Database**: PostgreSQL with Drizzle ORM
+- **Validation**: Zod schemas
+- **Icons**: Lucide React
+- **Package Manager**: Bun
+
+## Quick Start
+
+1. **Clone and install dependencies**:
+
+   ```bash
+   git clone <your-repo>
+   cd zmol
+   bun install
+   ```
+
+2. **Set up environment variables**:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Update `.env.local` with your database URL:
+
+   ```env
+   DATABASE_URL="postgresql://user:password@localhost:5432/zmol"
+   NEXT_PUBLIC_BASE_URL="http://localhost:3000"
+   ```
+
+3. **Set up the database**:
+
+   ```bash
+   # Generate migration files
+   bun run db:generate
+   
+   # Run migrations
+   bun run db:migrate
+   
+   # Or push schema directly (for development)
+   bun run db:push
+   ```
+
+4. **Start the development server**:
+
+   ```bash
+   bun run dev
+   ```
+
+5. **Open your browser** and visit [http://localhost:3000](http://localhost:3000)
+
+## Database Schema
+
+The application uses two main tables:
+
+- **urls**: Stores URL mappings, metadata, and click counts
+- **url_clicks**: Tracks individual click events with analytics data
+
+## API Routes
+
+All functionality is handled via Next.js server actions - no API routes needed!
+
+- `createShortUrl()`: Create a new short URL
+- `getUrlStats()`: Get analytics for a specific URL
+- `redirectToUrl()`: Handle URL redirects and click tracking
+
+## Project Structure
+
+```
+zmol/
+├── app/                    # Next.js app directory
+│   ├── [shortCode]/       # Dynamic route for URL redirection
+│   ├── stats/[shortCode]/ # Analytics pages
+│   ├── expired/           # Expired URL page
+│   └── not-found.tsx      # 404 page
+├── components/            # React components
+│   ├── ui/               # shadcn/ui components
+│   └── ...               # Feature components
+├── lib/                  # Utilities and database
+│   ├── db/               # Database schema and connection
+│   ├── actions.ts        # Server actions
+│   └── url-utils.ts      # URL utilities
+└── drizzle/              # Database migrations
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Development Commands
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Development
+bun run dev                # Start dev server
+bun run build             # Build for production
+bun run start             # Start production server
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Database
+bun run db:generate       # Generate migrations
+bun run db:migrate        # Run migrations
+bun run db:push           # Push schema to database
+bun run db:studio         # Open Drizzle Studio
 
-## Learn More
+# Code Quality
+bun run lint              # Run ESLint
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Environment Variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+# Required
+DATABASE_URL="postgresql://user:password@localhost:5432/zmol"
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Optional
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"  # Your domain in production
+```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Vercel (Recommended)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Set environment variables in Vercel dashboard
+4. Deploy!
+
+### Database Setup
+
+For production, you can use:
+
+- **Vercel Postgres** (easiest for Vercel deployments)
+- **Railway**
+- **PlanetScale**
+- **Supabase**
+- Any PostgreSQL provider
+
+## Features in Detail
+
+### URL Shortening
+
+- Automatic short code generation using nanoid
+- Custom short codes with validation
+- Duplicate URL detection
+- URL validation and formatting
+
+### Analytics
+
+- Click tracking with timestamps
+- User agent and referrer information
+- Geographic data (IP-based)
+- Daily click statistics
+- Visual analytics dashboard
+
+### UI/UX
+
+- Modern, gradient-based design
+- Responsive layout for all devices
+- Loading states and error handling
+- Copy-to-clipboard functionality
+- Dark mode support
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.

@@ -1,0 +1,204 @@
+'use server';
+
+import { eq, sql, desc } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { cache } from 'react';
+import { db, urls, urlClicks, insertUrlSchema } from '@/lib/db';
+import { generateShortCode, formatUrl, isValidUrl } from '@/lib/url-utils';
+
+export type ActionResult = {
+  success: boolean;
+  message: string;
+  data?: {
+    shortCode?: string;
+    existing?: boolean;
+  };
+};
+
+export async function createShortUrl(formData: FormData): Promise<ActionResult> {
+  try {
+    const originalUrl = formData.get('originalUrl') as string;
+    const customCode = formData.get('customCode') as string;
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+
+    if (!originalUrl) {
+      return { success: false, message: 'URL is required' };
+    }
+
+    const formattedUrl = formatUrl(originalUrl);
+    
+    if (!isValidUrl(formattedUrl)) {
+      return { success: false, message: 'Please enter a valid URL' };
+    }
+
+    // Check if URL already exists
+    const existingUrl = await db.select().from(urls).where(eq(urls.originalUrl, formattedUrl)).limit(1);
+    if (existingUrl.length > 0) {
+      return { 
+        success: true, 
+        message: 'URL already exists',
+        data: { shortCode: existingUrl[0].shortCode, existing: true }
+      };
+    }
+
+    let shortCode = customCode?.trim();
+    const isCustom = Boolean(shortCode);
+
+    // Validate custom code
+    if (isCustom) {
+      if (shortCode.length < 3 || shortCode.length > 20) {
+        return { success: false, message: 'Custom code must be between 3-20 characters' };
+      }
+      
+      if (!/^[a-zA-Z0-9-_]+$/.test(shortCode)) {
+        return { success: false, message: 'Custom code can only contain letters, numbers, hyphens, and underscores' };
+      }
+
+      // Check if custom code already exists
+      const existingCode = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
+      if (existingCode.length > 0) {
+        return { success: false, message: 'Custom code already exists' };
+      }
+    } else {
+      // Generate unique short code
+      do {
+        shortCode = generateShortCode();
+        const existing = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
+        if (existing.length === 0) break;
+      } while (true);
+    }
+
+    // Get page title if not provided
+    let pageTitle = title?.trim() || '';
+    if (!pageTitle) {
+      try {
+        const response = await fetch(formattedUrl, { 
+          method: 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; URLShortener/1.0)' }
+        });
+        const html = await response.text();
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        pageTitle = titleMatch ? titleMatch[1].trim() : '';
+      } catch {
+        // If we can't fetch the title, that's okay
+      }
+    }
+
+    const insertData = {
+      originalUrl: formattedUrl,
+      shortCode: shortCode!,
+      title: pageTitle || null,
+      description: description?.trim() || null,
+      isCustom,
+    };
+
+    const result = insertUrlSchema.safeParse(insertData);
+    if (!result.success) {
+      return { success: false, message: 'Invalid data provided' };
+    }
+
+    await db.insert(urls).values(insertData);
+
+    revalidatePath('/');
+    return { 
+      success: true, 
+      message: 'Short URL created successfully!',
+      data: { shortCode: shortCode, existing: false }
+    };
+  } catch (error) {
+    console.error('Error creating short URL:', error);
+    return { success: false, message: 'Failed to create short URL' };
+  }
+}
+
+export const getUrlByShortCode = cache(async (shortCode: string) => {
+  try {
+    const result = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
+    return result[0] || null;
+  } catch (error) {
+    console.error('Error fetching URL:', error);
+    return null;
+  }
+});
+
+export async function trackClick(urlId: number, userAgent?: string, referer?: string) {
+  try {
+    const headersList = await headers();
+    const ipAddress = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || 'unknown';
+    
+    await Promise.all([
+      db.insert(urlClicks).values({
+        urlId,
+        userAgent: userAgent || null,
+        referer: referer || null,
+        ipAddress: ipAddress.split(',')[0].trim(),
+      }),
+      db.update(urls).set({ 
+        clicks: sql`${urls.clicks} + 1`,
+        updatedAt: new Date()
+      }).where(eq(urls.id, urlId))
+    ]);
+  } catch (error) {
+    console.error('Error tracking click:', error);
+  }
+}
+
+export async function redirectToUrl(shortCode: string) {
+  const url = await getUrlByShortCode(shortCode);
+  
+  if (!url) {
+    redirect('/404');
+  }
+
+  if (url.expiresAt && new Date() > url.expiresAt) {
+    redirect('/expired');
+  }
+
+  // Track the click in the background
+  trackClick(url.id).catch(console.error);
+
+  redirect(url.originalUrl);
+}
+
+export const getRecentUrls = cache(async (limit = 10) => {
+  try {
+    const result = await db
+      .select()
+      .from(urls)
+      .orderBy(desc(urls.createdAt))
+      .limit(limit);
+    return result;
+  } catch (error) {
+    console.error('Error fetching recent URLs:', error);
+    return [];
+  }
+});
+
+export const getUrlStats = cache(async (shortCode: string) => {
+  try {
+    const url = await getUrlByShortCode(shortCode);
+    if (!url) return null;
+
+    const clickStats = await db
+      .select({
+        date: sql<string>`DATE(${urlClicks.clickedAt})`.as('date'),
+        count: sql<number>`COUNT(*)`.as('count')
+      })
+      .from(urlClicks)
+      .where(eq(urlClicks.urlId, url.id))
+      .groupBy(sql`DATE(${urlClicks.clickedAt})`)
+      .orderBy(sql`DATE(${urlClicks.clickedAt}) DESC`)
+      .limit(30);
+
+    return {
+      url,
+      clickStats
+    };
+  } catch (error) {
+    console.error('Error fetching URL stats:', error);
+    return null;
+  }
+});
