@@ -1,5 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getUrlByShortCode, trackClick } from '@/lib/actions';
+import { db, urls, urlClicks } from '@/lib/db';
+import { eq, sql } from 'drizzle-orm';
+import { getMiddlewareCachedUrl, CACHE_TAGS } from '@/lib/cache';
+import { revalidateTag } from 'next/cache';
+
+// Simplified click tracking for middleware
+async function trackClickInMiddleware(urlId: number, userAgent?: string, referer?: string, ip?: string) {
+  try {
+    await Promise.all([
+      db.insert(urlClicks).values({
+        urlId,
+        userAgent: userAgent || null,
+        referer: referer || null,
+        ipAddress: ip || 'unknown',
+      }),
+      db.update(urls).set({ 
+        clicks: sql`${urls.clicks} + 1`,
+        updatedAt: new Date()
+      }).where(eq(urls.id, urlId))
+    ]);
+
+    // Invalidate click-related caches
+    revalidateTag(CACHE_TAGS.URL_STATS);
+    revalidateTag(CACHE_TAGS.CLICKS);
+    revalidateTag(CACHE_TAGS.URLS);
+  } catch (error) {
+    console.error('Error tracking click in middleware:', error);
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -27,7 +55,7 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Get URL data from database
-    const url = await getUrlByShortCode(shortCode);
+    const url = await getMiddlewareCachedUrl(shortCode);
     
     if (!url) {
       return NextResponse.redirect(new URL('/not-found', request.url));
@@ -39,10 +67,12 @@ export async function middleware(request: NextRequest) {
     }
 
     // Track the click asynchronously (don't await to avoid blocking redirect)
-    trackClick(
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    trackClickInMiddleware(
       url.id,
       request.headers.get('user-agent') || undefined,
-      request.headers.get('referer') || undefined
+      request.headers.get('referer') || undefined,
+      ipAddress.split(',')[0].trim()
     ).catch(console.error);
 
     // Redirect to the original URL

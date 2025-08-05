@@ -1,32 +1,8 @@
-import { db, urls } from '@/lib/db';
-import { sql } from 'drizzle-orm';
+import { getCachedAppStats } from '@/lib/cache';
 import { Link2, BarChart3, TrendingUp, Clock } from 'lucide-react';
 
-async function getStats() {
-  try {
-    const [totalUrls, totalClicks, recentUrls] = await Promise.all([
-      db.select({ count: sql<number>`count(*)` }).from(urls),
-      db.select({ total: sql<number>`sum(${urls.clicks})` }).from(urls),
-      db.select({ count: sql<number>`count(*)` }).from(urls).where(sql`${urls.createdAt} >= NOW() - INTERVAL '7 days'`)
-    ]);
-
-    return {
-      totalUrls: totalUrls[0]?.count || 0,
-      totalClicks: totalClicks[0]?.total || 0,
-      recentUrls: recentUrls[0]?.count || 0,
-    };
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    return {
-      totalUrls: 0,
-      totalClicks: 0,
-      recentUrls: 0,
-    };
-  }
-}
-
 export async function StatsCards() {
-  const stats = await getStats();
+  const stats = await getCachedAppStats();
 
   const cards = [
     {

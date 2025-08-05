@@ -1,12 +1,17 @@
 'use server';
 
-import { eq, sql, desc } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { eq, sql } from 'drizzle-orm';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
-import { cache } from 'react';
 import { db, urls, urlClicks, insertUrlSchema } from '@/lib/db';
 import { generateShortCode, formatUrl, isValidUrl } from '@/lib/url-utils';
+import { 
+  getCachedUrlByShortCode, 
+  getCachedRecentUrls, 
+  getCachedUrlStats,
+  CACHE_TAGS 
+} from '@/lib/cache';
 
 export type ActionResult = {
   success: boolean;
@@ -102,7 +107,11 @@ export async function createShortUrl(formData: FormData): Promise<ActionResult> 
 
     await db.insert(urls).values(insertData);
 
+    // Invalidate relevant caches
+    revalidateTag(CACHE_TAGS.URLS);
+    revalidateTag(CACHE_TAGS.RECENT);
     revalidatePath('/');
+    
     return { 
       success: true, 
       message: 'Short URL created successfully!',
@@ -114,15 +123,7 @@ export async function createShortUrl(formData: FormData): Promise<ActionResult> 
   }
 }
 
-export const getUrlByShortCode = cache(async (shortCode: string) => {
-  try {
-    const result = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
-    return result[0] || null;
-  } catch (error) {
-    console.error('Error fetching URL:', error);
-    return null;
-  }
-});
+export const getUrlByShortCode = getCachedUrlByShortCode;
 
 export async function trackClick(urlId: number, userAgent?: string, referer?: string) {
   try {
@@ -141,6 +142,11 @@ export async function trackClick(urlId: number, userAgent?: string, referer?: st
         updatedAt: new Date()
       }).where(eq(urls.id, urlId))
     ]);
+
+    // Invalidate click-related caches
+    revalidateTag(CACHE_TAGS.URL_STATS);
+    revalidateTag(CACHE_TAGS.CLICKS);
+    revalidateTag(CACHE_TAGS.URLS);
   } catch (error) {
     console.error('Error tracking click:', error);
   }
@@ -163,42 +169,6 @@ export async function redirectToUrl(shortCode: string) {
   redirect(url.originalUrl);
 }
 
-export const getRecentUrls = cache(async (limit = 10) => {
-  try {
-    const result = await db
-      .select()
-      .from(urls)
-      .orderBy(desc(urls.createdAt))
-      .limit(limit);
-    return result;
-  } catch (error) {
-    console.error('Error fetching recent URLs:', error);
-    return [];
-  }
-});
+export const getRecentUrls = getCachedRecentUrls;
 
-export const getUrlStats = cache(async (shortCode: string) => {
-  try {
-    const url = await getUrlByShortCode(shortCode);
-    if (!url) return null;
-
-    const clickStats = await db
-      .select({
-        date: sql<string>`DATE(${urlClicks.clickedAt})`.as('date'),
-        count: sql<number>`COUNT(*)`.as('count')
-      })
-      .from(urlClicks)
-      .where(eq(urlClicks.urlId, url.id))
-      .groupBy(sql`DATE(${urlClicks.clickedAt})`)
-      .orderBy(sql`DATE(${urlClicks.clickedAt}) DESC`)
-      .limit(30);
-
-    return {
-      url,
-      clickStats
-    };
-  } catch (error) {
-    console.error('Error fetching URL stats:', error);
-    return null;
-  }
-});
+export const getUrlStats = getCachedUrlStats;
