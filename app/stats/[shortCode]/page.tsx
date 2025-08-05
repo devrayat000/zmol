@@ -105,7 +105,6 @@ export default async function StatsPage({ params }: PageProps) {
                     Visit Original
                   </a>
                 </Button>
-                </Button>
               </div>
             </div>
           </div>
