@@ -1,19 +1,21 @@
-import { getRecentUrls } from '@/lib/actions';
+import { getCachedRecentUrls } from '@/lib/cache';
 import { extractDomain, truncateText } from '@/lib/url-utils';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, BarChart3, Clock } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ExternalLink, BarChart3, Clock, Copy, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 
 export async function RecentUrls() {
-  const recentUrls = await getRecentUrls(10);
+  const recentUrls = await getCachedRecentUrls(10);
 
   if (recentUrls.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-          <Clock className="h-8 w-8 text-gray-400" />
+      <div className="text-center py-16">
+        <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/20 rounded-full mb-4 glow-border">
+          <Sparkles className="h-8 w-8 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        <h3 className="text-lg font-medium mb-2">
           No URLs yet
         </h3>
         <p className="text-muted-foreground">
@@ -23,8 +25,13 @@ export async function RecentUrls() {
     );
   }
 
+  const copyUrl = async (url: string) => {
+    await navigator.clipboard.writeText(url);
+    toast.success('URL copied to clipboard!');
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {recentUrls.map((url) => {
         const shortUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/${url.shortCode}`;
         const domain = extractDomain(url.originalUrl);
@@ -32,34 +39,34 @@ export async function RecentUrls() {
         return (
           <div
             key={url.id}
-            className="group flex items-center gap-4 p-4 bg-gray-50/50 dark:bg-gray-900/50 rounded-lg border border-gray-200/50 dark:border-gray-700/50 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+            className="group flex items-center gap-4 p-4 glass-effect rounded-lg glow-border card-hover"
           >
-            <div className="flex-1 min-w-0 space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-gray-900 dark:text-white truncate">
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="flex items-center gap-3">
+                <h3 className="font-medium text-foreground truncate text-lg">
                   {url.title || domain || 'Untitled'}
                 </h3>
                 {url.isCustom && (
-                  <span className="px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs rounded-full">
+                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full glow-border">
                     Custom
                   </span>
                 )}
               </div>
               
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground">
-                <span className="font-mono truncate">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
+                <span className="font-mono text-primary truncate glow-border px-2 py-1 rounded bg-primary/5">
                   {shortUrl}
                 </span>
-                <span className="hidden sm:block">→</span>
-                <span className="truncate">
-                  {truncateText(url.originalUrl, 60)}
+                <span className="hidden sm:block text-muted-foreground">→</span>
+                <span className="truncate text-muted-foreground">
+                  {truncateText(url.originalUrl, 50)}
                 </span>
               </div>
               
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <BarChart3 className="h-3 w-3" />
-                  {url.clicks} clicks
+                  {url.clicks.toLocaleString()} clicks
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
@@ -68,26 +75,64 @@ export async function RecentUrls() {
               </div>
             </div>
 
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-              >
-                <a href={shortUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </Button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => copyUrl(shortUrl)}
+                      className="glow-border"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy URL</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               
-              <Button
-                variant="ghost"
-                size="sm"
-                asChild
-              >
-                <Link href={`/stats/${url.shortCode}`}>
-                  <BarChart3 className="h-3 w-3" />
-                </Link>
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="glow-border"
+                    >
+                      <a href={shortUrl} target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open link</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      asChild
+                      className="glow-border"
+                    >
+                      <Link href={`/stats/${url.shortCode}`}>
+                        <BarChart3 className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>View analytics</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         );

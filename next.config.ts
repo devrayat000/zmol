@@ -1,10 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  experimental: {
-    // Enable experimental features for better performance
-    ppr: true, // Partial Pre-rendering
-  },
+  // experimental: {
+  //   // Enable experimental features for better performance
+  //   ppr: true, // Partial Pre-rendering
+  // },
   
   // Enable caching
   async headers() {
