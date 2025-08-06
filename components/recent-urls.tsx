@@ -3,7 +3,6 @@ import { extractDomain, truncateText } from '@/lib/url-utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { ExternalLink, BarChart3, Clock, Copy, Sparkles } from 'lucide-react';
-import Link from 'next/link';
 import { toast } from 'sonner';
 
 export async function RecentUrls() {
@@ -46,11 +45,6 @@ export async function RecentUrls() {
                 <h3 className="font-medium text-foreground truncate text-lg">
                   {url.title || domain || 'Untitled'}
                 </h3>
-                {url.isCustom && (
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full glow-border">
-                    Custom
-                  </span>
-                )}
               </div>
               
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm">
@@ -110,26 +104,6 @@ export async function RecentUrls() {
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Open link</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      asChild
-                      className="glow-border"
-                    >
-                      <Link href={`/stats/${url.shortCode}`}>
-                        <BarChart3 className="h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>View analytics</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

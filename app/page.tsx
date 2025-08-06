@@ -39,10 +39,10 @@ export default function Home() {
           <div className="space-y-4">
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
               Shorten URLs with
-              <span className="gradient-text block">Style & Analytics</span>
+              <span className="gradient-text block">Style & Speed</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Transform long URLs into elegant, trackable links. Monitor performance with detailed analytics and customize your short codes.
+              Transform long URLs into elegant, trackable links instantly. Simple, fast, and free URL shortening service.
             </p>
           </div>
         </div>

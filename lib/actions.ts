@@ -9,7 +9,6 @@ import { generateShortCode, formatUrl, isValidUrl } from '@/lib/url-utils';
 import { 
   getCachedUrlByShortCode, 
   getCachedRecentUrls, 
-  getCachedUrlStats,
   CACHE_TAGS 
 } from '@/lib/cache';
 
@@ -25,9 +24,6 @@ export type ActionResult = {
 export async function createShortUrl(formData: FormData): Promise<ActionResult> {
   try {
     const originalUrl = formData.get('originalUrl') as string;
-    const customCode = formData.get('customCode') as string;
-    const title = formData.get('title') as string;
-    const description = formData.get('description') as string;
 
     if (!originalUrl) {
       return { success: false, message: 'URL is required' };
@@ -49,55 +45,34 @@ export async function createShortUrl(formData: FormData): Promise<ActionResult> 
       };
     }
 
-    let shortCode = customCode?.trim();
-    const isCustom = Boolean(shortCode);
+    // Generate unique short code
+    let shortCode: string;
+    do {
+      shortCode = generateShortCode();
+      const existing = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
+      if (existing.length === 0) break;
+    } while (true);
 
-    // Validate custom code
-    if (isCustom) {
-      if (shortCode.length < 3 || shortCode.length > 20) {
-        return { success: false, message: 'Custom code must be between 3-20 characters' };
-      }
-      
-      if (!/^[a-zA-Z0-9-_]+$/.test(shortCode)) {
-        return { success: false, message: 'Custom code can only contain letters, numbers, hyphens, and underscores' };
-      }
-
-      // Check if custom code already exists
-      const existingCode = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
-      if (existingCode.length > 0) {
-        return { success: false, message: 'Custom code already exists' };
-      }
-    } else {
-      // Generate unique short code
-      do {
-        shortCode = generateShortCode();
-        const existing = await db.select().from(urls).where(eq(urls.shortCode, shortCode)).limit(1);
-        if (existing.length === 0) break;
-      } while (true);
-    }
-
-    // Get page title if not provided
-    let pageTitle = title?.trim() || '';
-    if (!pageTitle) {
-      try {
-        const response = await fetch(formattedUrl, { 
-          method: 'GET',
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; URLShortener/1.0)' }
-        });
-        const html = await response.text();
-        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        pageTitle = titleMatch ? titleMatch[1].trim() : '';
-      } catch {
-        // If we can't fetch the title, that's okay
-      }
+    // Get page title
+    let pageTitle = '';
+    try {
+      const response = await fetch(formattedUrl, { 
+        method: 'GET',
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; URLShortener/1.0)' }
+      });
+      const html = await response.text();
+      const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+      pageTitle = titleMatch ? titleMatch[1].trim() : '';
+    } catch {
+      // If we can't fetch the title, that's okay
     }
 
     const insertData = {
       originalUrl: formattedUrl,
-      shortCode: shortCode!,
+      shortCode: shortCode,
       title: pageTitle || null,
-      description: description?.trim() || null,
-      isCustom,
+      description: null,
+      isCustom: false,
     };
 
     const result = insertUrlSchema.safeParse(insertData);
@@ -144,7 +119,6 @@ export async function trackClick(urlId: number, userAgent?: string, referer?: st
     ]);
 
     // Invalidate click-related caches
-    revalidateTag(CACHE_TAGS.URL_STATS);
     revalidateTag(CACHE_TAGS.CLICKS);
     revalidateTag(CACHE_TAGS.URLS);
   } catch (error) {
@@ -170,5 +144,3 @@ export async function redirectToUrl(shortCode: string) {
 }
 
 export const getRecentUrls = getCachedRecentUrls;
-
-export const getUrlStats = getCachedUrlStats;

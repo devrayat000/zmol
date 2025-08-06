@@ -21,7 +21,6 @@ async function trackClickInMiddleware(urlId: number, userAgent?: string, referer
     ]);
 
     // Invalidate click-related caches
-    revalidateTag(CACHE_TAGS.URL_STATS);
     revalidateTag(CACHE_TAGS.CLICKS);
     revalidateTag(CACHE_TAGS.URLS);
   } catch (error) {
@@ -36,7 +35,6 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
-    pathname.startsWith('/stats') ||
     pathname === '/' ||
     pathname === '/expired' ||
     pathname === '/404' ||
@@ -96,8 +94,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - stats (analytics pages)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|stats).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };

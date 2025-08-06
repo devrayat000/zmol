@@ -18,15 +18,6 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        source: '/stats/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'private, max-age=0, must-revalidate',
-          },
-        ],
-      },
     ];
   },
 
