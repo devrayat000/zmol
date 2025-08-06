@@ -1,9 +1,16 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from './schema';
+import { neon, neonConfig } from "@neondatabase/serverless";
+import { drizzle as drizzleNeon } from "drizzle-orm/neon-http";
+import * as schema from "./schema";
 
-// Disable prefetch as it's not supported by all postgres providers
-const client = postgres(process.env.DATABASE_URL!, { prepare: false });
-export const db = drizzle(client, { schema });
+if (process.env.NODE_ENV === "development") {
+	neonConfig.fetchEndpoint = (host) => {
+		const [protocol, port] =
+			host === "db.localtest.me" ? ["http", 4444] : ["https", 443];
+		return `${protocol}://${host}:${port}/sql`;
+	};
+}
 
-export * from './schema';
+const client = neon(process.env.DATABASE_URL!, {});
+export const db = drizzleNeon({ client, schema });
+
+export * from "./schema";

@@ -1,17 +1,16 @@
 # Zmol - URL Shortener
 
-A modern, fast URL shortener built with Next.js 15, featuring server actions, real-time analytics, and a beautiful UI.
+A modern, fast URL shortener built with Next.js 15, featuring server actions, global statistics, and a beautiful UI.
 
 ## Features
 
 - 🔗 **URL Shortening**: Transform long URLs into short, memorable links
-- 📊 **Analytics**: Track clicks, view statistics, and monitor performance
-- 🎨 **Custom Codes**: Create personalized short codes
+- 📊 **Global Stats**: View total clicks and URL statistics
+- 🎨 **Modern Design**: Beautiful UI with glassmorphism effects
 - 📱 **Responsive Design**: Beautiful UI that works on all devices
 - ⚡ **Fast Performance**: Built with Next.js 15 and server actions
 - 🌙 **Dark Mode**: Automatic dark/light mode support
 - 🗄️ **PostgreSQL**: Reliable database with Drizzle ORM
-- 📈 **Real-time Stats**: Click tracking with detailed analytics
 
 ## Tech Stack
 
@@ -78,7 +77,6 @@ The application uses two main tables:
 All functionality is handled via Next.js server actions - no API routes needed!
 
 - `createShortUrl()`: Create a new short URL
-- `getUrlStats()`: Get analytics for a specific URL
 - `redirectToUrl()`: Handle URL redirects and click tracking
 
 ## Project Structure
@@ -87,7 +85,6 @@ All functionality is handled via Next.js server actions - no API routes needed!
 zmol/
 ├── app/                    # Next.js app directory
 │   ├── [shortCode]/       # Dynamic route for URL redirection
-│   ├── stats/[shortCode]/ # Analytics pages
 │   ├── expired/           # Expired URL page
 │   └── not-found.tsx      # 404 page
 ├── components/            # React components
@@ -152,21 +149,19 @@ For production, you can use:
 ### URL Shortening
 
 - Automatic short code generation using nanoid
-- Custom short codes with validation
-- Duplicate URL detection
+- Duplicate URL detection  
 - URL validation and formatting
 
-### Analytics
+### Statistics
 
 - Click tracking with timestamps
 - User agent and referrer information
-- Geographic data (IP-based)
-- Daily click statistics
-- Visual analytics dashboard
+- Global statistics dashboard
+- Recent URLs overview
 
 ### UI/UX
 
-- Modern, gradient-based design
+- Modern, gradient-based design with glassmorphism effects
 - Responsive layout for all devices
 - Loading states and error handling
 - Copy-to-clipboard functionality

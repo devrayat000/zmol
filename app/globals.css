@@ -146,20 +146,51 @@
   }
   
   .glow-border-strong {
-    @apply glow-border;
+    @apply relative border border-border/50;
   }
   
   .glow-border-strong::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
     background: linear-gradient(135deg, 
       oklch(70% 0.15 264 / 0.6) 0%, 
       oklch(65% 0.18 300 / 0.4) 25%,
       oklch(60% 0.15 220 / 0.6) 50%,
       oklch(70% 0.15 264 / 0.6) 100%
     );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    z-index: -1;
   }
   
   .card-hover {
-    @apply transition-all duration-300 hover:glow-border-strong;
+    @apply transition-all duration-300;
+  }
+  
+  .card-hover:hover {
+    @apply relative border border-border/50;
+  }
+  
+  .card-hover:hover::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, 
+      oklch(70% 0.15 264 / 0.6) 0%, 
+      oklch(65% 0.18 300 / 0.4) 25%,
+      oklch(60% 0.15 220 / 0.6) 50%,
+      oklch(70% 0.15 264 / 0.6) 100%
+    );
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite: xor;
+    -webkit-mask-composite: xor;
+    z-index: -1;
   }
   
   .glass-effect {

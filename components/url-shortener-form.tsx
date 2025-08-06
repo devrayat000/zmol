@@ -6,15 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Link, Copy, Check, Loader2, ExternalLink, Settings, Sparkles } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Link, Copy, Check, Loader2, ExternalLink, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function UrlShortenerForm() {
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<ActionResult | null>(null);
   const [copied, setCopied] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const shortUrl = result?.data?.shortCode 
     ? `${window.location.origin}/${result.data.shortCode}`
@@ -38,7 +36,6 @@ export function UrlShortenerForm() {
 
   const resetForm = () => {
     setResult(null);
-    setShowAdvanced(false);
     setCopied(false);
   };
 
@@ -154,62 +151,6 @@ export function UrlShortenerForm() {
             disabled={isPending}
             className="text-base h-12 glow-border focus:glow-border-strong transition-all"
           />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="text-muted-foreground hover:text-foreground glow-border"
-          >
-            <Settings className="h-4 w-4" />
-            {showAdvanced ? 'Hide' : 'Show'} Advanced Options
-          </Button>
-        </div>
-
-        <div className={cn(
-          'space-y-4 transition-all duration-500 ease-in-out',
-          showAdvanced ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0 overflow-hidden'
-        )}>
-          <div className="glass-effect rounded-lg p-4 glow-border space-y-4">
-            <div className="space-y-3">
-              <Label htmlFor="customCode" className="text-sm font-medium">Custom Short Code (Optional)</Label>
-              <Input
-                id="customCode"
-                name="customCode"
-                placeholder="my-custom-link"
-                disabled={isPending}
-                className="glow-border focus:glow-border-strong transition-all"
-              />
-              <p className="text-xs text-muted-foreground">
-                3-20 characters. Letters, numbers, hyphens, and underscores only.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="title" className="text-sm font-medium">Title (Optional)</Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="Page title"
-                disabled={isPending}
-                className="glow-border focus:glow-border-strong transition-all"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label htmlFor="description" className="text-sm font-medium">Description (Optional)</Label>
-              <Input
-                id="description"
-                name="description"
-                placeholder="Brief description"
-                disabled={isPending}
-                className="glow-border focus:glow-border-strong transition-all"
-              />
-            </div>
-          </div>
         </div>
 
         {result && !result.success && (

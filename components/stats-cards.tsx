@@ -42,19 +42,19 @@ export async function StatsCards() {
         return (
           <div
             key={card.title}
-            className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg p-6 hover:shadow-xl transition-shadow"
+            className="glass-effect rounded-xl glow-border p-6 card-hover"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-2 rounded-lg ${card.color}`}>
+              <div className={`p-2 rounded-lg glow-border ${card.color}`}>
                 <Icon className="h-5 w-5" />
               </div>
             </div>
             
             <div className="space-y-1">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl font-bold text-foreground">
                 {card.value}
               </p>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              <p className="text-sm font-medium text-foreground">
                 {card.title}
               </p>
               <p className="text-xs text-muted-foreground">

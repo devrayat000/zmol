@@ -70,6 +70,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          storageKey="zmol.theme"
         >
           {children}
           <Toaster />
