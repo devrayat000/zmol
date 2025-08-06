@@ -28,7 +28,7 @@ export default function Home() {
 								className="glow-border"
 							>
 								<a
-									href="https://github.com"
+									href="https://github.com/devrayat000"
 									target="_blank"
 									rel="noopener noreferrer"
 								>

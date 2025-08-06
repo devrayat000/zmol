@@ -5,7 +5,12 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { db, urls, urlClicks, insertUrlSchema } from "@/lib/db";
-import { generateShortCode, formatUrl, isValidUrl } from "@/lib/url-utils";
+import {
+	generateShortCode,
+	formatUrl,
+	isValidUrl,
+	truncateText,
+} from "@/lib/url-utils";
 import {
 	getCachedUrlByShortCode,
 	getCachedRecentUrls,
@@ -80,13 +85,13 @@ export async function createShortUrl(
 		const insertData = {
 			originalUrl: formattedUrl,
 			shortCode: shortCode,
-			title: pageTitle || null,
-			description: null,
+			title: truncateText(pageTitle, 150) || null,
 			isCustom: false,
 		};
 
 		const result = insertUrlSchema.safeParse(insertData);
 		if (!result.success) {
+			console.log("Invalid data provided:", result.error);
 			return { success: false, message: "Invalid data provided" };
 		}
 

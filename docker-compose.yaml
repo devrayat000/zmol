@@ -1,0 +1,29 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    command: '-d 1'
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: neon
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: neondb
+    ports:
+      - "9807:5432"
+    volumes:
+      - ./.data/pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U neon']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neon-proxy:
+    image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+    environment:
+      - PG_CONNECTION_STRING=postgres://neon:password@postgres:5432/neondb
+    ports:
+      - '4444:4444'
+    depends_on:
+      postgres:
+        condition: service_healthy
