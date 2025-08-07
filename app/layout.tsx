@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
+import Script from "next/script";
+import { WebVitals } from "@/components/web-vitals";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -86,6 +88,19 @@ export default function RootLayout({
 					{children}
 					<Toaster />
 				</ThemeProvider>
+				<WebVitals />
+				<Script
+					async
+					strategy="afterInteractive"
+					src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+				/>
+				<Script id="google-analytics" strategy="afterInteractive">
+					{`window.dataLayer = window.dataLayer || [];
+					function gtag(){dataLayer.push(arguments);}
+					gtag('js', new Date());
+
+					gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');`}
+				</Script>
 			</body>
 		</html>
 	);
