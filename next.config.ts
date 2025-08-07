@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
 		minimumCacheTTL: 3600,
 	},
 
+	compiler: { removeConsole: process.env.NODE_ENV === "production" },
+
 	// Bundle optimization
 	webpack: (config, { isServer }) => {
 		if (!isServer) {

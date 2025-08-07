@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import { UrlShortenerForm } from "@/components/url-shortener-form";
 // import { RecentUrls } from "@/components/recent-urls";
 import { StatsCards } from "@/components/stats-cards";
@@ -6,6 +7,31 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Link2, Github } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import homepage from "@/assets/homepage.png";
+
+export const metadata: Metadata = {
+	openGraph: {
+		url: "/",
+		images: [
+			{
+				url: homepage.src,
+				width: homepage.width,
+				height: homepage.height,
+				alt: "Zmol - Fast & Free URL Shortener",
+			},
+		],
+	},
+	twitter: {
+		images: [
+			{
+				url: homepage.src,
+				width: homepage.width,
+				height: homepage.height,
+				alt: "Zmol - Fast & Free URL Shortener",
+			},
+		],
+	},
+};
 
 export default function Home() {
 	return (
