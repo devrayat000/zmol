@@ -91,10 +91,10 @@ export default function RootLayout({
 				<WebVitals />
 				<Script
 					async
-					strategy="afterInteractive"
+					strategy="beforeInteractive"
 					src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
 				/>
-				<Script id="google-analytics" strategy="afterInteractive">
+				<Script id="google-analytics" strategy="beforeInteractive">
 					{`window.dataLayer = window.dataLayer || [];
 					function gtag(){dataLayer.push(arguments);}
 					gtag('js', new Date());
