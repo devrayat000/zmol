@@ -63,7 +63,7 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 		}
 
 		// Track the click asynchronously (don't await to avoid blocking redirect)
-		fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/track/click`, {
+		fetch(`${request.nextUrl.origin}/api/track/click`, {
 			method: "POST",
 			body: JSON.stringify({ urlId: url.id }),
 			headers: {
