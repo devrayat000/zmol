@@ -11,11 +11,10 @@ import { z } from "zod";
 
 export const urls = pgTable("urls", {
 	id: serial("id").primaryKey(),
-	originalUrl: text("original_url").notNull(),
+	originalUrl: text("original_url").notNull().unique(),
 	shortCode: text("short_code").notNull().unique(),
 	title: text("title"),
 	description: text("description"),
-	clicks: integer("clicks").default(0).notNull(),
 	isCustom: boolean("is_custom").default(false).notNull(),
 	expiresAt: timestamp("expires_at"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -50,7 +49,6 @@ export const insertUrlSchema = createInsertSchema(urls, {
 	description: z.string().max(500).optional(),
 }).omit({
 	id: true,
-	clicks: true,
 	createdAt: true,
 	updatedAt: true,
 });

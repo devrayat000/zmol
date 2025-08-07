@@ -6,22 +6,6 @@ const nextConfig: NextConfig = {
 	//   ppr: true, // Partial Pre-rendering
 	// },
 
-	// Enable caching
-	async headers() {
-		return [
-			{
-				source: "/(.*)",
-				headers: [
-					{
-						key: "Cache-Control",
-						value:
-							"public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
-					},
-				],
-			},
-		];
-	},
-
 	// Compress responses
 	compress: true,
 

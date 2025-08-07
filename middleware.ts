@@ -1,6 +1,6 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { db, urls, urlClicks } from "@/lib/db";
-import { eq, sql } from "drizzle-orm";
+import { type NextRequest, NextResponse, NextFetchEvent } from "next/server";
+import { db, urls } from "@/lib/db";
+import { eq } from "drizzle-orm";
 
 // Simple URL lookup without caching for middleware
 async function getUrlByShortCode(shortCode: string) {
@@ -17,38 +17,7 @@ async function getUrlByShortCode(shortCode: string) {
 	}
 }
 
-// Simplified click tracking for middleware
-async function trackClickInMiddleware(
-	urlId: number,
-	userAgent?: string,
-	referer?: string,
-	ip?: string,
-) {
-	try {
-		await Promise.all([
-			db.insert(urlClicks).values({
-				urlId,
-				userAgent: userAgent || null,
-				referer: referer || null,
-				ipAddress: ip || "unknown",
-			}),
-			db
-				.update(urls)
-				.set({
-					clicks: sql`${urls.clicks} + 1`,
-					updatedAt: new Date(),
-				})
-				.where(eq(urls.id, urlId)),
-		]);
-
-		// Note: revalidateTag might not work properly in Edge Runtime
-		// We'll handle cache invalidation in the server action instead
-	} catch (error) {
-		console.error("Error tracking click in middleware:", error);
-	}
-}
-
-export async function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest, event: NextFetchEvent) {
 	console.log(`Middleware triggered for path: ${request.url}`);
 
 	const pathname = request.nextUrl.pathname;
@@ -94,22 +63,22 @@ export async function middleware(request: NextRequest) {
 		}
 
 		// Track the click asynchronously (don't await to avoid blocking redirect)
-		const ipAddress =
-			request.headers.get("x-forwarded-for") ||
-			request.headers.get("x-real-ip") ||
-			"unknown";
-		trackClickInMiddleware(
-			url.id,
-			request.headers.get("user-agent") || undefined,
-			request.headers.get("referer") || undefined,
-			ipAddress.split(",")[0].trim(),
-		).catch(console.error);
+		fetch(`${request.nextUrl.origin}/api/track/click`, {
+			method: "POST",
+			body: JSON.stringify({ urlId: url.id }),
+			headers: {
+				"Content-Type": "application/json",
+				...request.headers,
+			},
+		})
+			.then((r) => r.text())
+			.catch(console.log);
 
 		// Redirect to the original URL
 		return NextResponse.redirect(url.originalUrl, {
-			status: 301, // Permanent redirect for better SEO
+			status: 302, // Temporary redirect for better SEO
 			headers: {
-				"Cache-Control": "public, max-age=3600, s-maxage=3600", // Cache for 1 hour
+				"Cache-Control": "no-cache, no-store, must-revalidate", // Prevent caching
 			},
 		});
 	} catch (error) {

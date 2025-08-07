@@ -127,21 +127,12 @@ export async function trackClick(
 			headersList.get("x-real-ip") ||
 			"unknown";
 
-		await Promise.all([
-			db.insert(urlClicks).values({
-				urlId,
-				userAgent: userAgent || null,
-				referer: referer || null,
-				ipAddress: ipAddress.split(",")[0].trim(),
-			}),
-			db
-				.update(urls)
-				.set({
-					clicks: sql`${urls.clicks} + 1`,
-					updatedAt: new Date(),
-				})
-				.where(eq(urls.id, urlId)),
-		]);
+		await db.insert(urlClicks).values({
+			urlId,
+			userAgent: userAgent || null,
+			referer: referer || null,
+			ipAddress: ipAddress.split(",")[0].trim(),
+		});
 
 		// Invalidate click-related caches
 		revalidateTag(CACHE_TAGS.CLICKS);

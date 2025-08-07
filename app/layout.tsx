@@ -32,6 +32,9 @@ export const metadata: Metadata = {
 		{ name: "Zul Ikram Musaddik Rayat", url: "https://github.com/devrayat000" },
 	],
 	creator: "Zul Ikram Musaddik Rayat <rayathossain49@gmail.com>",
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+	),
 	openGraph: {
 		locale: "en_US",
 		siteName: "Zmol",
