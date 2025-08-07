@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { db, urls, urlClicks } from "@/lib/db";
-import { eq, sql, desc } from "drizzle-orm";
+import { eq, sql, desc, count, sum, gte } from "drizzle-orm";
 
 // Cache keys and tags
 export const CACHE_KEYS = {
@@ -99,12 +99,12 @@ export const getCachedAppStats = unstable_cache(
 	async () => {
 		try {
 			const [totalUrls, totalClicks, recentUrls] = await Promise.all([
-				db.select({ count: sql<number>`count(*)` }).from(urls),
-				db.select({ total: sql<number>`sum(${urls.clicks})` }).from(urls),
+				db.select({ count: count() }).from(urls),
+				db.select({ total: count() }).from(urlClicks),
 				db
-					.select({ count: sql<number>`count(*)` })
+					.select({ count: count() })
 					.from(urls)
-					.where(sql`${urls.createdAt} >= NOW() - INTERVAL '7 days'`),
+					.where(gte(urls.createdAt, sql`NOW() - INTERVAL '7 days'`)),
 			]);
 
 			return {
